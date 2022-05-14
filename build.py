@@ -2,11 +2,15 @@
 
 import os
 from glob import glob
+from subprocess import run
 import yaml
 from md2gemini import md2gemini
 
 dist_folder = ".//dist"
 DIRs = ("posts", "papers")
+
+# clean untracked files
+run(["git", "clean", "-dfx"], check=True)
 
 # get a dictionary of markdown files
 md_files = {DIR: glob(".//jekyll-files//_{DIR}//*.md".format(DIR=DIR)) for DIR in DIRs}

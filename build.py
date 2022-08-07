@@ -7,14 +7,19 @@ Script to convert my WWW Jekyll site <https://www.matthewthom.as> to Gemini
 
 import shutil
 import os
+import re
 from glob import glob
-from subprocess import run
 import yaml
+import urllib.parse
 from md2gemini import md2gemini
+from gemfeed import build_feed
 
+WWW_URL = "https://matthewthom.as"
 JEKYLL_FOLDER = os.path.join(".", "jekyll-files")
 DIST_FOLDER = os.path.join(".", "dist")
 GEMINI_TEMPLATES = os.path.join(".", "gemini-templates")
+DATA_FOLDER = os.path.join(JEKYLL_FOLDER, "_data")
+
 DIRs = ("posts", "papers")
 
 # clean untracked files
@@ -77,7 +82,7 @@ def process_library(DIR, make_files: bool = True):
             data, markdown = file_split
 
             # convert to gemini
-            gemini = md2gemini(markdown)
+            gemini = md2gemini(markdown, links="paragraph", strip_html=True)
             data["content"] = gemini
 
             if make_files:
@@ -107,31 +112,81 @@ def gemini_copy_file(data: dict, id: str):
     return file_filename
 
 
+def project_list(yaml_list: str):
+    """
+    Construct my project lists (eg. on index page)
+    """
+    list_output = ""
+    for p in yaml.safe_load(yaml_list):
+        list_output += f"{p['title']}: {p['description']}\n"
+        if "url" in p.keys():
+            # check if link is relative
+            if p["url"].startswith("/"):
+                list_output += f"=> {WWW_URL}{p['url']} Link\n"
+            else:
+                list_output += f"=> {p['url']} Link\n"
+        if "github" in p.keys():
+            # check if link is relative
+            if p["github"].startswith("/"):
+                list_output += f"=> {WWW_URL}{p['github']} GitHub\n"
+            else:
+                list_output += f"=> {p['github']} GitHub\n"
+        list_output += "\n"
+    return list_output
+
+
+# ROOT INDEX SECTION
+# =============================================================================
+# generate the primary index file for the site
+
+# load template
+with open(os.path.join(GEMINI_TEMPLATES, "index.gmi"), "r", encoding="utf8") as f:
+    index_root = f.read()
+
+# Academic projects
+index_root += "### Academic Projects\n\n"
+with open(
+    os.path.join(DATA_FOLDER, "projects-academic.yml"), "r", encoding="utf8"
+) as f:
+    index_root += project_list(f.read()) + "\n\n"
+
+# Professional projects
+index_root += "### Professional Projects\n\n"
+with open(
+    os.path.join(DATA_FOLDER, "projects-professional.yml"), "r", encoding="utf8"
+) as f:
+    index_root += project_list(f.read()) + "\n\n"
+
+# Gist projects
+index_root += "### Code Snippets\n\n"
+with open(os.path.join(DATA_FOLDER, "projects-gists.yml"), "r", encoding="utf8") as f:
+    index_root += project_list(f.read()) + "\n\n"
+
+with open(os.path.join(DIST_FOLDER, "index.gmi"), "w", encoding="utf8") as f:
+    f.write(index_root)
+
+
 # POSTS SECTION
 # =============================================================================
-# generate a gmi file for each post
+# generate a gmi file for each post and create an index
 gemini_posts = process_library("posts")
 with open(os.path.join(GEMINI_TEMPLATES, "posts.gmi"), "r", encoding="utf8") as f:
-    index_posts = (
-        f.read()
-        + "\n"
-        + "\n".join(
-            [
-                f"=> {gemini_post['gmi_path']} {gemini_post['title']}"
-                if "title" in gemini_post.keys()
-                else f"=> {gemini_post['gmi_path']}"
-                for gemini_post in gemini_posts
-            ]
-        )
-        + "\n"
-    )
+    index_posts = f.read() + "\n"
+
+for gemini_post in gemini_posts:
+    file_filename = os.path.basename(gemini_post["gmi_path"])
+    index_posts += f"=> {file_filename}"
+    if "title" in gemini_post.keys():
+        index_posts += " " + gemini_post["title"]
+    index_posts += "\n"
+
 with open(os.path.join(DIST_FOLDER, "posts", "index.gmi"), "w", encoding="utf8") as f:
     f.write(index_posts)
 
 
 # PAPERS SECTION
 # =============================================================================
-# generate a gmi file for each post
+# generate a a page that lists my papers and links to PDFs
 gemini_papers = process_library("papers", make_files=False)
 with open(os.path.join(GEMINI_TEMPLATES, "papers.gmi"), "r", encoding="utf8") as f:
     index_papers = f.read()
@@ -143,10 +198,20 @@ for gemini_paper in gemini_papers:
         if "content" in gemini_paper.keys():
             index_papers += gemini_paper["content"] + "\n\n"
         if "pdf" in gemini_paper.keys():
-            pdf_filename = gemini_copy_file(gemini_paper,"pdf")
+            pdf_filename = gemini_copy_file(gemini_paper, "pdf")
             index_papers += f"=> {pdf_filename} Paper\n"
         if "slides" in gemini_paper.keys():
-            pdf_filename = gemini_copy_file(gemini_paper,"slides")
+            pdf_filename = gemini_copy_file(gemini_paper, "slides")
             index_papers += f"=> {pdf_filename} Slides\n"
 with open(os.path.join(DIST_FOLDER, "papers", "index.gmi"), "w", encoding="utf8") as f:
     f.write(index_papers)
+
+
+build_feed(
+    directory=os.path.join(DIST_FOLDER, "posts"),
+    base_url="gemini://gemini.matthewthom.as/posts/",
+    output=os.path.join("..", "atom.xml"),
+    title="Matthew W. Thomas' Posts",
+    subtitle="On Math, Economics, and Technology",
+    author="Matthew W. Thomas'",
+)

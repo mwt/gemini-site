@@ -7,10 +7,8 @@ Script to convert my WWW Jekyll site <https://www.matthewthom.as> to Gemini
 
 import shutil
 import os
-import re
 from glob import glob
 import yaml
-import urllib.parse
 from md2gemini import md2gemini
 from gemfeed import build_feed
 

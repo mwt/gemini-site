@@ -128,16 +128,6 @@ def process_library(DIR, make_files: bool = True):
     return library_list
 
 
-def gemini_copy_file(data: dict, id: str):
-    file_path = os.path.join(JEKYLL_FOLDER, *data[id].split("/"))
-    file_filename = os.path.basename(file_path)
-    shutil.copyfile(
-        file_path,
-        os.path.join(DIST_FOLDER, "papers", file_filename),
-    )
-    return file_filename
-
-
 def project_list(yaml_list: str):
     """
     Construct my project lists (eg. on index page)
@@ -224,11 +214,9 @@ for gemini_paper in gemini_papers:
         if "content" in gemini_paper.keys():
             index_papers += gemini_paper["content"] + "\n\n"
         if "pdf" in gemini_paper.keys():
-            pdf_filename = gemini_copy_file(gemini_paper, "pdf")
-            index_papers += f"=> {pdf_filename} Paper\n"
+            index_papers += f"=> {gemini_paper['pdf']} Paper\n"
         if "slides" in gemini_paper.keys():
-            pdf_filename = gemini_copy_file(gemini_paper, "slides")
-            index_papers += f"=> {pdf_filename} Slides\n"
+            index_papers += f"=> {gemini_paper['slides']} Slides\n"
 with open(os.path.join(DIST_FOLDER, "papers", "index.gmi"), "w", encoding="utf8") as f:
     f.write(index_papers)
 

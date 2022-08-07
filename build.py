@@ -97,6 +97,16 @@ def process_library(DIR, make_files: bool = True):
     return library_list
 
 
+def gemini_copy_file(data: dict, id: str):
+    file_path = os.path.join(JEKYLL_FOLDER, *data[id].split("/"))
+    file_filename = os.path.basename(file_path)
+    shutil.copyfile(
+        file_path,
+        os.path.join(DIST_FOLDER, "papers", file_filename),
+    )
+    return file_filename
+
+
 # POSTS SECTION
 # =============================================================================
 # generate a gmi file for each post
@@ -133,20 +143,10 @@ for gemini_paper in gemini_papers:
         if "content" in gemini_paper.keys():
             index_papers += gemini_paper["content"] + "\n\n"
         if "pdf" in gemini_paper.keys():
-            pdf_path = os.path.join(JEKYLL_FOLDER, *gemini_paper["pdf"].split("/"))
-            pdf_filename = os.path.basename(pdf_path)
+            pdf_filename = gemini_copy_file(gemini_paper,"pdf")
             index_papers += f"=> {pdf_filename} Paper\n"
-            shutil.copyfile(
-                pdf_path,
-                os.path.join(DIST_FOLDER, "papers", pdf_filename),
-            )
         if "slides" in gemini_paper.keys():
-            pdf_path = os.path.join(JEKYLL_FOLDER, *gemini_paper["slides"].split("/"))
-            pdf_filename = os.path.basename(pdf_path)
+            pdf_filename = gemini_copy_file(gemini_paper,"slides")
             index_papers += f"=> {pdf_filename} Slides\n"
-            shutil.copyfile(
-                pdf_path,
-                os.path.join(DIST_FOLDER, "papers", pdf_filename),
-            )
 with open(os.path.join(DIST_FOLDER, "papers", "index.gmi"), "w", encoding="utf8") as f:
     f.write(index_papers)

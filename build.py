@@ -32,6 +32,11 @@ os.makedirs(DIST_FOLDER, exist_ok=True)
 for DIR in DIRs:
     os.makedirs(os.path.join(DIST_FOLDER, DIR), exist_ok=True)
 
+# symlink assets from www
+os.symlink(
+    r"../site/assets", os.path.join(DIST_FOLDER, "assets"), target_is_directory=True
+)
+
 
 def split_frontmatter(md_file):
     """
@@ -79,6 +84,9 @@ def convert_links(url: str):
         elif url.startswith("/posts/"):
             # temporary fix
             return "/posts/"
+        elif url.startswith("/assets/"):
+            # this folder is symlinked
+            return url
         else:
             return WWW_URL + url
     else:
@@ -232,9 +240,4 @@ build_feed(
     title="Matthew W. Thomas' Posts",
     subtitle="On Math, Economics, and Technology",
     author="Matthew W. Thomas'",
-)
-
-# symlink assets from www
-os.symlink(
-    r"../site/assets", os.path.join(DIST_FOLDER, "assets"), target_is_directory=True
 )

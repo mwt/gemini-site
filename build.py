@@ -8,6 +8,7 @@ Script to convert my WWW Jekyll site <https://www.matthewthom.as> to Gemini
 import shutil
 import os
 from glob import glob
+from subprocess import run
 import yaml
 from md2gemini import md2gemini
 from gemfeed import build_feed
@@ -21,7 +22,7 @@ DATA_FOLDER = os.path.join(JEKYLL_FOLDER, "_data")
 DIRs = ("posts", "papers")
 
 # clean untracked files
-# run(["git", "clean", "-dfx"], check=True)
+run(["git", "clean", "-dfx"], check=True)
 
 # get a dictionary of markdown files
 md_files = {DIR: glob(os.path.join(JEKYLL_FOLDER, f"_{DIR}", "*.md")) for DIR in DIRs}
@@ -83,6 +84,7 @@ def convert_links(url: str):
     else:
         return url
 
+
 def process_library(DIR, make_files: bool = True):
     """
     Function to convert all markdown files in DIR directly to gmi
@@ -96,7 +98,9 @@ def process_library(DIR, make_files: bool = True):
             data, markdown = file_split
 
             # convert to gemini
-            gemini = md2gemini(markdown, links="paragraph", strip_html=True, link_func=convert_links)
+            gemini = md2gemini(
+                markdown, links="paragraph", strip_html=True, link_func=convert_links
+            )
             data["content"] = gemini
 
             if make_files:
@@ -228,4 +232,9 @@ build_feed(
     title="Matthew W. Thomas' Posts",
     subtitle="On Math, Economics, and Technology",
     author="Matthew W. Thomas'",
+)
+
+# symlink assets from www
+os.symlink(
+    r"../site/assets", os.path.join(DIST_FOLDER, "assets"), target_is_directory=True
 )

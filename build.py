@@ -67,6 +67,22 @@ def split_frontmatter(md_file):
         return {}, mixed_text
 
 
+def convert_links(url: str):
+    """
+    Function to convert links found in markdown
+    Run by md2gemini in process_library function
+    """
+    if url.startswith("/"):
+        if url.startswith("/papers/") and url.endswith("/"):
+            return url[:-1] + ".pdf"
+        elif url.startswith("/posts/"):
+            # temporary fix
+            return "/posts/"
+        else:
+            return WWW_URL + url
+    else:
+        return url
+
 def process_library(DIR, make_files: bool = True):
     """
     Function to convert all markdown files in DIR directly to gmi
@@ -80,7 +96,7 @@ def process_library(DIR, make_files: bool = True):
             data, markdown = file_split
 
             # convert to gemini
-            gemini = md2gemini(markdown, links="paragraph", strip_html=True)
+            gemini = md2gemini(markdown, links="paragraph", strip_html=True, link_func=convert_links)
             data["content"] = gemini
 
             if make_files:

@@ -1,3 +1,4 @@
 [submodule "jekyll-files"]
 	path = jekyll-files
 	url = https://github.com/mwt/matthewthom.as.git
+	branch = master

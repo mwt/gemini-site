@@ -19,7 +19,7 @@ DIST_FOLDER = os.path.join(".", "dist")
 GEMINI_TEMPLATES = os.path.join(".", "gemini-templates")
 DATA_FOLDER = os.path.join(JEKYLL_FOLDER, "_data")
 
-DIRs = ("posts", "papers")
+DIRs = ("about", "projects", "posts", "papers")
 
 # clean untracked files
 run(["git", "clean", "-dfx"], check=True)
@@ -134,7 +134,7 @@ def project_list(yaml_list: str):
     """
     list_output = ""
     for p in yaml.safe_load(yaml_list):
-        list_output += f"{p['title']}: {p['description']}\n"
+        list_output += f"### {p['title']}\n{p['description']}\n"
         if "url" in p.keys():
             # check if link is relative
             if p["url"].startswith("/"):
@@ -154,31 +154,57 @@ def project_list(yaml_list: str):
 # ROOT INDEX SECTION
 # =============================================================================
 # generate the primary index file for the site
+shutil.copyfile(
+    os.path.join(GEMINI_TEMPLATES, "index.gmi"), os.path.join(DIST_FOLDER, "index.gmi")
+)
+
+
+# ABOUT SECTION
+# =============================================================================
+# generate the primary index file for the site
+shutil.copyfile(
+    os.path.join(GEMINI_TEMPLATES, "about.gmi"),
+    os.path.join(DIST_FOLDER, "about", "index.gmi"),
+)
+
+
+# PROJECTS SECTION
+# =============================================================================
+# generate the projects page from data files
 
 # load template
-with open(os.path.join(GEMINI_TEMPLATES, "index.gmi"), "r", encoding="utf8") as f:
+with open(os.path.join(GEMINI_TEMPLATES, "projects.gmi"), "r", encoding="utf8") as f:
     index_root = f.read()
 
 # Academic projects
-index_root += "### Academic Projects\n\n"
+index_root += "## Academic Projects\n\n"
 with open(
     os.path.join(DATA_FOLDER, "projects-academic.yml"), "r", encoding="utf8"
 ) as f:
     index_root += project_list(f.read()) + "\n\n"
 
 # Professional projects
-index_root += "### Professional Projects\n\n"
+index_root += "## Professional Projects\n\n"
 with open(
     os.path.join(DATA_FOLDER, "projects-professional.yml"), "r", encoding="utf8"
 ) as f:
     index_root += project_list(f.read()) + "\n\n"
 
+# Personal projects
+index_root += "## Personal Projects\n\n"
+with open(
+    os.path.join(DATA_FOLDER, "projects-personal.yml"), "r", encoding="utf8"
+) as f:
+    index_root += project_list(f.read()) + "\n\n"
+
 # Gist projects
-index_root += "### Code Snippets\n\n"
+index_root += "## Code Snippets\n\n"
 with open(os.path.join(DATA_FOLDER, "projects-gists.yml"), "r", encoding="utf8") as f:
     index_root += project_list(f.read()) + "\n\n"
 
-with open(os.path.join(DIST_FOLDER, "index.gmi"), "w", encoding="utf8") as f:
+with open(
+    os.path.join(DIST_FOLDER, "projects", "index.gmi"), "w", encoding="utf8"
+) as f:
     f.write(index_root)
 
 
@@ -210,7 +236,7 @@ with open(os.path.join(GEMINI_TEMPLATES, "papers.gmi"), "r", encoding="utf8") as
 # construct index file from data and copy PDFs
 for gemini_paper in gemini_papers:
     if "title" in gemini_paper.keys():
-        index_papers += f"\n## {gemini_paper['title']}\n\n"
+        index_papers += f"\n## {gemini_paper['title']}\n"
         if "content" in gemini_paper.keys():
             index_papers += gemini_paper["content"] + "\n\n"
         if "pdf" in gemini_paper.keys():

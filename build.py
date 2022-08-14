@@ -37,7 +37,7 @@ for DIR in DIRs:
 
 # symlink assets from www
 os.symlink(
-    r"../site/assets", os.path.join(DIST_FOLDER, "assets"), target_is_directory=True
+    r"../www/assets", os.path.join(DIST_FOLDER, "assets"), target_is_directory=True
 )
 
 

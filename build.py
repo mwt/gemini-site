@@ -8,7 +8,6 @@ Script to convert my WWW Jekyll site <https://www.matthewthom.as> to Gemini
 import shutil
 import os
 from glob import glob
-from subprocess import run
 import yaml
 from md2gemini import md2gemini
 from gemfeed import build_feed
@@ -18,14 +17,15 @@ CWD_PATH = os.path.abspath(os.getcwd())
 
 WWW_URL = "https://matthewthom.as"
 JEKYLL_FOLDER = os.path.join(CWD_PATH)
-DIST_FOLDER = os.path.join(SCRIPT_PATH, "_site", "gemini")
+DIST_FOLDER = os.path.join(CWD_PATH, "_site", "gemini")
 GEMINI_TEMPLATES = os.path.join(SCRIPT_PATH, "gemini-templates")
 DATA_FOLDER = os.path.join(JEKYLL_FOLDER, "_data")
 
 DIRs = ("about", "projects", "posts", "papers")
 
 # clean untracked files
-run(["git", "clean", "-dfx"], check=True)
+# from subprocess import run
+# run(["git", "clean", "-dfx"], check=True)
 
 # get a dictionary of markdown files
 md_files = {DIR: glob(os.path.join(JEKYLL_FOLDER, f"_{DIR}", "*.md")) for DIR in DIRs}
